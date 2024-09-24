@@ -4,7 +4,7 @@ import { mergeVideos } from './utils/mergeVideos';
 
 
 const ffmpeg = createFFmpeg({ log: true });
-
+const endpointBaseURL = 'http://localhost:3001/api';
 const App: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [isMerging, setIsMerging] = useState(false);
@@ -35,16 +35,53 @@ const App: React.FC = () => {
 
   // Function to merge media and export the video
   const mergeMedia = async () => {
+    console.log('Merging media...');
+    
     setIsMerging(true);
-    await mergeVideos(
-      ffmpeg,
-      ffmpegReady,
-      files,
-      setDownloadUrl,
-      setVideoToPlay,
-      setOutputVideo,
-      progress
-    );
+
+    const videoFile = files.find((file) => file.type.includes('video'));
+    const imageFile = files.find((file) => file.type.includes('image'));
+    console.log('videoFile:', videoFile);
+    console.log('image:', imageFile);
+    
+    if (!videoFile || !imageFile) {
+      alert('Please select both video and image files.');
+      return;
+    }
+    const formData = new FormData();
+
+    formData.append('video', videoFile);
+    formData.append('image', imageFile);
+
+    try {
+      const response = await fetch(`${endpointBaseURL}/uploadfiles`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        alert('Files uploaded successfully!');
+        console.log('response:', response);
+        
+      } else {
+        alert('Failed to upload files.');
+        console.log('response:', response);
+
+      }
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Error uploading files.');
+    }
+
+    // await mergeVideos(
+    //   ffmpeg,
+    //   ffmpegReady,
+    //   files,
+    //   setDownloadUrl,
+    //   setVideoToPlay,
+    //   setOutputVideo,
+    //   progress
+    // );
     setIsMerging(false);
   };
 
